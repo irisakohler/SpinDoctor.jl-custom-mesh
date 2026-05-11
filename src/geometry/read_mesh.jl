@@ -44,3 +44,55 @@ function read_mesh(filename)
 
     (; points, facets, facetmarkers, elements, elementmarkers)
 end
+
+
+
+"""
+    read_custom_tetgen_mesh(filename)
+    
+Read mesh from Tetgen format file where face file also contains information which compartment(s) face belongs to
+"""
+function read_custom_tetgen_mesh(filename)
+    @info "Reading Tetgen FE mesh from " * filename
+
+    # Read points
+    points, dim = open(filename * ".node", "r") do io
+        npoint, dim, = parse.(Int, split(readline(io)))
+        points = zeros(dim, npoint)
+        for ipoint = 1:npoint
+            points[:, ipoint] = parse.(Float64, split(readline(io))[2:1+dim])
+        end
+        points, dim
+    end
+
+    # Read facets and their associated boundaries and compartments
+    facets, facetmarkers, facetcompartments = open(filename * ".face", "r") do io
+        nfacet = parse(Int, split(readline(io))[1])
+        facets = zeros(Int, dim, nfacet)
+        facetmarkers = zeros(Int, nfacet)
+        facetcompartments = Vector{Vector{Int}}(undef, nfacet)
+        for ifacet = 1:nfacet
+            tmp = split(readline(io))
+            facets[:, ifacet] = parse.(Int, tmp[2:1+dim])
+            facetmarkers[ifacet] = parse(Int, tmp[2+dim])
+            facetcompartments[ifacet] = parse.(Int, tmp[(3+dim):end])
+        end
+        facets, facetmarkers, facetcompartments
+    end
+
+    # Read elements and their associated compartments
+    elements, elementmarkers = open(filename * ".ele", "r") do io
+        nelement = parse(Int, split(readline(io))[1])
+        elements = zeros(Int, dim + 1, nelement)
+        elementmarkers = zeros(Int, nelement)
+        for ielement = 1:nelement
+            tmp = parse.(Int, split(readline(io)))
+            elements[:, ielement] = tmp[2:2+dim]
+            elementmarkers[ielement] = tmp[3+dim]
+        end
+        elements, elementmarkers
+    end
+
+    (; points, facets, facetmarkers, facetcompartments, elements, elementmarkers)
+
+end

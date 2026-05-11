@@ -125,3 +125,43 @@ function coefficients(setup::Union{DiskSetup{T},SphereSetup{T}}; D, T₂, ρ, κ
 
     coeffs
 end
+
+function coefficients(setup::CustomGeometrySetup{T}; D, T₂, ρ, κ, γ) where {T}
+    ncompartment = setup.ncompartment
+    nboundary = setup.nboundary
+    n_ecs = setup.n_ecs
+    outer_boundaries_idx = setup.outer_boundaries_idx
+
+    # Initialize output arrays
+    coeffs = (;
+        D = [zeros(T, 2, 2) for _ = 1:ncompartment],
+        T₂ = zeros(T, ncompartment),
+        κ = zeros(T, nboundary),
+        ρ = zeros(Complex{T}, ncompartment),
+        γ = T(γ),
+    )
+
+    # assumes that the first n_ecs compartments are ecs
+    for i = 1:n_ecs
+        coeffs.D[i] = D.ecs
+        coeffs.T₂[i] = T₂.ecs
+        coeffs.ρ[i] = ρ.ecs
+    end
+
+    for i = (n_ecs + 1):ncompartment
+        coeffs.D[i] = D.cell
+        coeffs.T₂[i] = T₂.cell
+        coeffs.ρ[i] = ρ.cell
+    end
+
+    # set permeability of outer boundary to 0
+    for i = 1:nboundary
+        if i in outer_boundaries_idx
+            coeffs.κ[i] = 0
+        else
+            coeffs.κ[i] = κ
+        end
+    end
+
+    coeffs
+end

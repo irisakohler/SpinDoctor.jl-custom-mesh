@@ -47,3 +47,48 @@ function split_mesh(mesh_all)
 
     FEMesh(; point_map, points, facets, elements)
 end
+
+
+function split_custom_mesh(mesh_all)
+    points_all = mesh_all.points
+    facets_all = mesh_all.facets
+    facetmarkers_all = mesh_all.facetmarkers
+    facetcompartments_all = mesh_all.facetcompartments
+    elements_all = mesh_all.elements
+    elementmarkers_all = mesh_all.elementmarkers
+
+    dim, npoint = size(points_all)
+    ncompartment = maximum(elementmarkers_all)
+    nboundary = maximum(facetmarkers_all)
+    elements = [elements_all[:, elementmarkers_all .== icmpt] for icmpt = 1:ncompartment]
+
+    # Point maps
+    point_map = sort.(unique.(elements))
+    point_map_inv = [zeros(Int, npoint) for _ = 1:ncompartment]
+    for icmpt = 1:ncompartment
+        for ipoint = 1:length(point_map[icmpt])
+            point_map_inv[icmpt][point_map[icmpt][ipoint]] = ipoint
+        end
+    end
+
+    points = [points_all[:, point_map[icmpt]] for icmpt = 1:ncompartment]
+    facets = [zeros(Int, dim, 0) for _ = 1:ncompartment, _ = 1:nboundary]
+
+    for ifacet in axes(facets_all, 2)
+        marker = facetmarkers_all[ifacet]
+        face = facets_all[:, ifacet]
+        compartments = facetcompartments_all[ifacet]
+
+        for icmpt in compartments
+            # Transform facet indices to local
+            face_local = point_map_inv[icmpt][face]
+            facets[icmpt, marker] = hcat(facets[icmpt, marker], face_local)
+        end
+    end
+
+    for icmpt = 1:ncompartment
+        elements[icmpt] .= point_map_inv[icmpt][elements[icmpt]]
+    end
+
+    FEMesh(; point_map, points, facets, elements)
+end

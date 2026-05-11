@@ -153,3 +153,11 @@ SlabSetup(;
     twist,
     refinement,
 )
+
+
+@with_kw struct CustomGeometrySetup{T} <: AbstractSetup{T}
+    ncompartment::Int64
+    nboundary::Int64
+    n_ecs::Int64
+    outer_boundaries_idx::Vector{Int64}
+end

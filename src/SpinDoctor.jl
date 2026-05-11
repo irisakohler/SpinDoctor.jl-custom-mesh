@@ -32,20 +32,22 @@ using Statistics: mean
 using TetGen: RawTetGenIO, facetlist!, tetrahedralize
 using Triangulate: TriangulateIO, triangulate
 using WriteVTK
+using DataFrames
+using CSV
+using YAML
 
 # Gradidents
 export PGSE, CosOGSE, SinOGSE, DoublePGSE, GeneralGradient, ScalarGradient
 export integral, int_F², intervals, isconstant, echotime
 
-export assemble_matrices
-export split_mesh
+export assemble_matrices, assemble_matrices_parallel
 export split_field
 export get_cmpt_volumes
 
 export Model
 export initial_conditions
 
-export savefield
+export savefield, savefield_csv, save_parameters
 
 export compute_adc_sta
 export fit_adc
@@ -76,9 +78,11 @@ export AbstractSetup,
     SphereSetup,
     NeuronSetup,
     CylinderSetup,
-    SlabSetup
+    SlabSetup,
+    CustomGeometrySetup
 export coefficients, analytical_coefficients
 export create_geometry
+export load_custom_geometry
 
 # Utils
 include("utils/fresnel.jl")
@@ -132,6 +136,9 @@ include("matrix_assembly/compute_areas.jl")
 include("matrix_assembly/compute_lengths.jl")
 include("matrix_assembly/couple_flux_matrix.jl")
 include("matrix_assembly/assemble_matrices.jl")
+include("matrix_assembly/assemble_matrices_parallel.jl")
+include("matrix_assembly/assemble_flux_matrices_parallel.jl")
+include("matrix_assembly/couple_flux_matrix_parallel.jl")
 
 # Matrix formalism
 include("matrix_formalism/eig2length.jl")
@@ -169,6 +176,8 @@ include("adc/solve_hadc.jl")
 include("postprocess/fit_adc.jl")
 include("postprocess/fit_tensors.jl")
 include("postprocess/savefield.jl")
+include("postprocess/savefield_csv.jl")
+include("postprocess/save_parameters.jl")
 
 # Plot
 include("plot/plot_field.jl")
@@ -191,5 +200,6 @@ include("recipes/create_surfaces.jl")
 include("recipes/create_geometry.jl")
 include("recipes/radial_dimension.jl")
 include("recipes/analytical_coefficients.jl")
+include("recipes/load_custom_geometry.jl")
 
 end
